@@ -1,0 +1,220 @@
+# ========================================
+# 野生动物智能监测平台 - 全局配置文件
+# ========================================
+
+# 数据路径配置
+paths:
+  raw_data: "./data/raw"
+  processed_data: "./data/processed"
+  video_frames: "./data/processed/video_frames"
+  mel_spectrograms: "./data/processed/mel_spectrograms"
+  metadata: "./data/processed/metadata"
+  splits: "./data/splits"
+  results: "./results"
+
+# 物种类别配置
+species:
+  classes: ["red_deer", "chamois", "fox", "hare", "wolf"]
+  num_classes: 5
+  # 根据实际统计的样本数填写（先运行统计脚本）
+  class_samples:
+    red_deer: 4000  # 待更新
+    chamois: 800    # 待更新
+    fox: 600        # 待更新
+    hare: 700       # 待更新
+    wolf: 35        # 待更新
+
+# 行为类别配置
+behaviors:
+  classes: 
+    - "standing"
+    - "walking"
+    - "running"
+    - "resting"
+    - "sniffing"
+    - "eating"
+    - "looking_around"
+    - "grooming"
+    - "jumping"
+    - "sitting"
+    - "lying"
+    - "scratching"
+    - "shaking"
+    - "urinating"
+    - "defecating"
+    - "vocalizing"
+    - "drinking"
+    - "climbing"
+    - "digging"
+    - "other"
+  num_classes: 20
+
+# 视频处理配置
+video:
+  num_frames: 16              # 每个视频采样帧数
+  resolution: 224             # 输出分辨率 (224x224)
+  fps: null                   # 采样帧率（null表示均匀采样）
+  sampling_strategy: "uniform"  # uniform / random / dense
+  interpolation: "bilinear"    # 插值方法
+  normalize:
+    mean: [0.485, 0.456, 0.406]  # ImageNet标准
+    std: [0.229, 0.224, 0.225]
+
+# 音频处理配置
+audio:
+  sample_rate: 16000          # 采样率 (Hz)
+  duration: 10.0              # 音频时长（秒）
+  n_mels: 128                 # Mel频谱通道数
+  n_fft: 2048                 # FFT窗口大小
+  hop_length: 512             # 帧移
+  win_length: 2048            # 窗口长度
+  window: "hann"              # 窗函数类型
+  fmin: 0                     # 最小频率
+  fmax: 8000                  # 最大频率
+  normalize: true             # 是否归一化
+
+# 数据增强配置
+augmentation:
+  enable: true
+  
+  # 尾部类别（稀有类）- 强增强
+  tail_classes: ["wolf", "hare"]
+  tail_augmentation:
+    video:
+      random_horizontal_flip:
+        prob: 0.5
+      random_resized_crop:
+        scale: [0.8, 1.0]
+        ratio: [0.9, 1.1]
+      color_jitter:
+        brightness: 0.4
+        contrast: 0.4
+        saturation: 0.4
+        hue: 0.1
+        prob: 0.8
+      random_erasing:
+        prob: 0.3
+        scale: [0.02, 0.2]
+        ratio: [0.3, 3.3]
+      random_rotation:
+        degrees: 10
+        prob: 0.3
+    audio:
+      spec_augment:
+        freq_mask_param: 30
+        time_mask_param: 40
+        freq_mask_num: 2
+        time_mask_num: 2
+      time_stretch:
+        rate: [0.8, 1.2]
+        prob: 0.3
+      pitch_shift:
+        n_steps: [-2, 2]
+        prob: 0.3
+      add_noise:
+        noise_level: 0.005
+        prob: 0.4
+  
+  # 头部类别（常见类）- 弱增强
+  head_classes: ["red_deer"]
+  head_augmentation:
+    video:
+      center_crop: true
+      color_jitter:
+        brightness: 0.1
+        contrast: 0.1
+        saturation: 0.1
+        hue: 0.05
+        prob: 0.5
+    audio:
+      normalize: true
+
+# 数据集划分配置
+split:
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  random_seed: 42
+  stratify: true              # 是否保持类别比例
+  min_samples_per_class: 5    # 每个类别最少样本数
+
+# 采样策略配置
+sampling:
+  strategy: "class_balanced"   # class_balanced / instance_balanced / none
+  # 类别重采样权重计算方式
+  weight_calculation: "inverse"  # inverse / sqrt_inverse / effective_num
+  # Effective Number采样参数
+  effective_num_beta: 0.9999
+
+# 数据加载配置
+dataloader:
+  batch_size: 32              # 预处理时的批次大小
+  num_workers: 4              # 多进程数量
+  prefetch_factor: 2
+  pin_memory: false           # CPU模式设为false
+
+# 统计分析配置
+statistics:
+  generate_plots: true
+  plot_format: "png"
+  plot_dpi: 300
+  save_csv: true
+  calculate_weights: true
+
+# 日志配置
+logging:
+  level: "INFO"               # DEBUG / INFO / WARNING / ERROR
+  save_to_file: true
+  log_dir: "./logs"
+  log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# 缓存配置
+cache:
+  enable: true
+  cache_dir: "./cache"
+  clear_on_start: false
+
+# 可视化配置
+visualization:
+  show_samples: true
+  num_samples_to_show: 10
+  save_augmented_samples: true
+
+# 验证配置
+validation:
+  check_file_integrity: true
+  check_missing_files: true
+  check_corrupted_videos: true
+  check_audio_length: true
+
+# 性能优化配置
+performance:
+  use_multiprocessing: true
+  chunk_size: 100             # 分块处理大小
+  memory_limit_gb: 8          # 内存限制
+
+# 模型配置
+model:
+  video_feature_dim: 768      # 视频特征维度
+  audio_feature_dim: 512      # 音频特征维度
+  fusion_hidden_dim: 512      # 融合模块隐藏维度
+  fusion_num_layers: 2        # Transformer层数
+  fusion_num_heads: 8         # 注意力头数
+  dropout: 0.1                 # Dropout率
+  video_encoder:
+    model_name: "MCG-NJU/videomae-base-finetuned-kinetics"  # VideoMAE模型名称
+    pretrained: true
+    freeze_backbone: false     # 是否冻结backbone
+  audio_encoder:
+    model_name: "resnet18"     # ResNet模型名称
+    pretrained: true
+    freeze_backbone: false
+    input_channels: 1          # Mel频谱图通道数
+
+# 训练配置
+training:
+  num_epochs: 50              # 训练轮数
+  batch_size: 8               # 批次大小（根据GPU内存调整）
+  learning_rate: 1e-4          # 学习率
+  weight_decay: 1e-5           # 权重衰减
+  save_interval: 5             # 保存检查点间隔（epoch）
